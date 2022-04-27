@@ -1,0 +1,51 @@
+Automaton Definition Language - ADL
+-----------------------------------------------------------
+1. Abstract
+An automaton is a collection of 5 elements - it's states,
+input symbols, transition table, initial state and
+accepting states (a subset of it's states). The transition
+table is of upmost interest as it contains information
+about almost everyting in the automaton - how the current
+state relates to what the input is going to switch the
+state to. The only information that it does not directly
+provide is which states are accepting and which state is
+the initial one. ADL cleverly describes an automaton
+through it's translation table and prefix attributes.
+
+2. ADL grammar
+2.1 Allowed characters
+The reserved keyword characters are: []()!*^>
+All user-defined names must only contain lower/uppercase
+alphabetic characters, numbers and the symbol $ can be used
+to represent an empty string in the context of inputs.
+
+2.2 Structure
+Every ADL program is made up of state definitions each and
+every one of them is separated via a comma like this:
+[State1](...),[State2](...). Each definition is split in
+two parts - the state and the transitions.
+
+2.3 Defining the state
+The state is surrounded with square brackets, inside them
+is the name of the state and it's attributes (accepting,
+initial). The attributes are the single character prefixes:
+* and !, accepting and initial respectively. After them the
+name of the state is placed. An example of a valid state
+is: [!A](...),[*B](...). Where state "A" is the initial
+state but only state "B" is an accepting state.
+
+2.4 Defining transitions
+The transition definitions are surrounded with normal
+brackets. Inside are the transitions each separated by a
+^ (logical AND) symbol. Each transition is represented by
+an input and a state which are separated by a > symbol. So
+a valid example of an ADL program would be:
+[!*A](x>B^y>C),[*B](x>C^y>A),[C](x>A^y>B)
+In this automaton the state "A" is the initial state.
+States "A" and "B" are accepting but "C" isn't. From "A"
+the input "x" takes us to "B" and the input "y" takes us to
+"C". From "B" the input "x" takes us to "C" and "y" takes
+us to "A". In state "C" the input "x" takes us to "A" and
+"y" takes us to state "B".
+
+[!*1](c>2^r>3^t>1),[*2](c>2^r>2^t>2),[*3](t>4^c>3^r>3),[*4](c>4^r>4^t>4);

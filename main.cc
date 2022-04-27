@@ -1,8 +1,181 @@
-#include <bits\stdc++.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <unordered_map>
+#include <vector>
+#include <utility>
 using namespace std;
 
-class DFA {
-    // define our deterministic finite automaton
+class state {
+public:
+	bool initial;
+	bool accepting;
+	string name;
+	vector<pair<string, state>> transitions;
+
+};
+
+class dfa {
+private:
+	/* M = (S, I, t, s0, A) */
+	
+	vector<state> states;
+	vector<string> inputs;
+	//unordered_map<state, vector<pair<string, string>>> transition_table;
+	state start_state;
+	vector<state> accepting_states;
+
+	/* helper functions */
+
+	vector<string> tokenize(string input, char delim) {
+    		stringstream ss(input);
+    		vector<string> tokens;
+    		string aux;
+    		while (getline(ss, aux, delim)) {
+        		tokens.push_back(aux);
+    		}
+    		return tokens;
+	}
+
+    string keep_only(string input, string chars) {
+        stringstream ss(input);
+        string output;
+        char c;
+        while (ss >> c) {
+            if (chars.find(c) != string::npos) {
+                output += c;
+            }
+        }
+        return output;
+    }
+public:
+	/* ctor */
+	dfa() { }
+    dfa(string def) {
+        dfa m;
+        if (m.init(def) == 0) {
+            init(def);
+        } else {
+            /* ... */
+        }
+    }
+	int init(string def) {
+		/* gather all states and set their attributes (but not their transition tables) */
+		vector<string> statements = tokenize(def, ',');
+		string st;
+		for (unsigned int i = 0; i < statements.size(); ++i) {
+			st = statements[i];
+			state current_state;
+			vector<string> vec_state_name = tokenize(st, '(');
+			if (vec_state_name.size() != 2) return 1;
+			string state_name = vec_state_name[0];
+			if (state_name[0] == '[' && state_name[state_name.size() - 1] == ']') {
+				state_name = state_name.substr(1, state_name.size() - 2);
+				string modifiers = state_name.substr(0, 2);
+                
+                current_state.initial = false;
+                current_state.accepting = false;
+
+                /* handle modifiers */
+                modifiers = keep_only(modifiers, "*!");
+                if (modifiers.find('!') != string::npos) {
+                    current_state.initial = true;
+                }
+                if (modifiers.find('*') != string::npos) {
+                    current_state.accepting = true;
+                }
+
+                state_name = state_name.substr(modifiers.size());
+
+				current_state.name = state_name;
+			} else return 1;
+			for (unsigned int j = 0; j < states.size(); ++j) {
+				if (states[j].name == current_state.name) {
+					return -1; /* duplicate state definitions are not allowed */
+				}
+			}
+			states.push_back(current_state);
+            if (current_state.accepting) {
+                accepting_states.push_back(current_state);
+            }
+		}
+
+		/* go through all states */
+		for (unsigned int i = 0; i < states.size(); ++i) {
+			state current_state = states[i];
+			st = statements[i];
+			vector<string> vec_transitions = tokenize(st, ']');
+			if (vec_transitions.size() != 2) return 1;
+			string transitions = vec_transitions[1];
+			if (transitions[0] == '(' && transitions[transitions.size() - 1] == ')') {
+				transitions = transitions.substr(1, transitions.size() - 2); /* remove the brackets */
+			} else return 1;
+
+			vector<string> vec_individual_transitions = tokenize(transitions, '^');
+
+			string tr;
+			for (int j = 0; j < vec_individual_transitions.size(); ++j) {
+				tr = vec_individual_transitions[j];
+				vector<string> transition = tokenize(tr, '>');
+				if (transition.size() != 2) return 1;
+				string the_input = transition[0];
+				string goto_state = transition[1];
+                //cout << "the_input: " << the_input << endl;
+                //cout << "goto_state: " << goto_state << endl;
+				for (unsigned int k = 0; k < states.size(); ++k) {
+					if (states[k].name == goto_state) {
+						current_state.transitions.push_back(make_pair(the_input, states[k]));
+						break;
+					}
+				}
+			}
+            states[i] = current_state;
+		}
+        /* dump all states to stdout */
+        for (unsigned int i = 0; i < states.size(); ++i) {
+            cout << "state " << states[i].name << ": ";
+            if (states[i].initial) {
+                cout << "I ";
+            }
+            if (states[i].accepting) {
+                cout << "A ";
+            }
+            cout << "transitions: ";
+            for (unsigned int j = 0; j < states[i].transitions.size(); ++j) {
+                cout << states[i].transitions[j].first << " -> " << states[i].transitions[j].second.name << " ";
+            }
+            cout << endl;
+        }
+		return 0;
+	}
+	/* load an input sequence into the dfa */
+	state load(string input) {
+	
+	}
+	/* read the next input symbol */
+	state step_forward() {
+	
+	}
+	/* read the previous input symbol */
+	state step_back() {
+	
+	}
+	/* read and interpret all input symbols (must have an input sequence loaded) */
+	state run() {
+	
+	}
+	/* read and interpret all passed input symbols (overwrites already loaded sequence) */
+	state run(string input) {
+	
+	}
+	state run(vector<string> input) {
+	
+	}
+	bool is_accepted() {
+
+	}
+
 };
 
 vector<string> tokenize(string input, char delim) {
@@ -16,96 +189,6 @@ vector<string> tokenize(string input, char delim) {
 }
 
 int main(int argc, char **argv) {
-    string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    vector<string> states, /* all possible states */
-                    inputs; /* all possible valid inputs */
-    /*
-    (state, (input, goto_state))
-    when we're at "state", if we read "input" it'll take us to "goto_state"
-    */
-    unordered_map<string, vector<pair<string, string>>> transitions;
-
-    string starting_state, current_state;
-
-    /* transition definitions */
-    string def = "[on](push>off),[off](push>on)";
-    
-    /* state-(input-state) strings */
-    vector<string> tsi = tokenize(def, ',');
-    /* s = [s1](i1>s2^i2>s1) */
-    for (auto &s : tsi) {
-        /* get annotated state name in a vector (the 1st element) */
-        vector<string> statev = tokenize(s, '(');
-        if (statev.size() != 2) {
-            cout << "Invalid transition definition: " << s << endl;
-            return 1;
-        }
-        string state_name = statev[0];
-        /* check if the annotation is correct */
-        if (statev[0][0] == '[' && statev[0][statev[0].size() - 1] == ']') {
-            /* clean state name, i.e. from [s1] to s1 */
-            state_name = state_name.substr(1, state_name.size() - 2);
-            /* add the state to the vector of all possible states only if it's unique */
-            if (find(states.begin(), states.end(), state_name) == states.end()) {
-                states.push_back(state_name);
-            }
-        } else {
-            cout << "Invalid state name: " << statev[0] << endl;
-            return 1;
-        }
-
-        /* get annotated transitions (2nd element) */
-        vector<string> ats = tokenize(s, ']');
-        if (ats.size() != 2) {
-            cout << "Invalid transition tuple: " << ats[1] << endl;
-            return 1;
-        }
-        /* get transition and clean it from the brackets */
-        string ts = ats[1]; /* t = i1>s2^i2>s1 */
-        ts = ts.substr(1, ts.size() - 2);
-
-        /* individual transition definitions */
-        vector<string> transitionsv = tokenize(ts, '^');
-        
-        /* tv = i1>s2 */
-        for (auto &t : transitionsv) {
-            /* input-state pair vector, is = {i1, s2} */
-            vector<string> isv = tokenize(t, '>');
-            /* :tf: */
-            if (isv.size() != 2) {
-                cout << "Invalid transition: " << t << endl;
-                return 1;
-            }
-
-            transitions[state_name].push_back(make_pair(isv[0], isv[1]));
-            /* add input to possible inputs only if it's unique */
-            if (find(inputs.begin(), inputs.end(), isv[0]) == inputs.end()) {
-                inputs.push_back(isv[0]);
-            }
-        }
-    }
-
-    /* dump all states to stdout */
-    cout << "States: ";
-    for (auto &s : states) {
-        cout << s << " ";
-    }
-    cout << endl;
-    
-    /* dump all inputs to stdout */
-    cout << "Inputs: ";
-    for (auto &i : inputs) {
-        cout << i << " ";
-    }
-    cout << endl;
-
-    /* dump all transitions to stdout */
-    cout << "Transitions: " << endl;
-    for (auto &t : transitions) {
-        cout << "@" << t.first << ":\n";
-        for (auto &p : t.second) {
-            cout << "  " << p.first << " -> " << p.second << "\n";
-        }
-        cout << endl;
-    }
+    dfa m;
+	return m.init("[!*1](c>2^r>3^t>1),[*2](c>2^r>2^t>2),[*3](t>4^c>3^r>3),[*4](c>4^r>4^t>4)");
 }
