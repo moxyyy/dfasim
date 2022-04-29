@@ -41,11 +41,3 @@ brackets. Inside are the transitions each separated by a
 an input and a state which are separated by a > symbol. So
 a valid example of an ADL program would be:
 [!*A](x>B^y>C),[*B](x>C^y>A),[C](x>A^y>B)
-In this automaton the state "A" is the initial state.
-States "A" and "B" are accepting but "C" isn't. From "A"
-the input "x" takes us to "B" and the input "y" takes us to
-"C". From "B" the input "x" takes us to "C" and "y" takes
-us to "A". In state "C" the input "x" takes us to "A" and
-"y" takes us to state "B".
-
-[!*1](c>2^r>3^t>1),[*2](c>2^r>2^t>2),[*3](t>4^c>3^r>3),[*4](c>4^r>4^t>4);
